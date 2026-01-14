@@ -1,0 +1,8 @@
+# Large binary files
+*.dmg
+*.iso
+*.zip
+*.tar.gz
+
+# Specific large files
+html/dbeaver-ce-*.dmg
