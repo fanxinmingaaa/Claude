@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>智能投诉管理系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#1677ff",
+              secondary: "#f5f5f7",
+            },
+            borderRadius: {
+              none: "0px",
+              sm: "2px",
+              DEFAULT: "4px",
+              md: "8px",
+              lg: "12px",
+              xl: "16px",
+              "2xl": "20px",
+              "3xl": "24px",
+              full: "9999px",
+              button: "4px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      }
+      .menu-item:hover {
+        background-color: #e6f4ff;
+      }
+      .menu-item.active {
+        background-color: #e6f4ff;
+        font-weight: bold;
+      }
+      .page-container {
+        display: none;
+      }
+      .page-container.active {
+        display: block;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+      }
+      .chart-container {
+        height: 300px;
+      }
+      .radar-chart {
+        width: 100%;
+        height: 450px;
+      }
+      .table th,
+      .table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #eaeaea;
+      }
+      .table th {
+        background-color: #fafafa;
+        font-weight: 600;
+      }
+      .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .status-high {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      .status-medium {
+        background-color: #fff8e1;
+        color: #f57f17;
+      }
+      .status-low {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      .emotion-bar {
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        background-color: #eee;
+      }
+      .emotion-fill {
+        height: 100%;
+      }
+      .emotion-anger {
+        background-color: #ef5350;
+      }
+      .emotion-anxiety {
+        background-color: #ffca28;
+      }
+      .emotion-dissatisfaction {
+        background-color: #ffb74d;
+      }
+      .emotion-satisfaction {
+        background-color: #66bb6a;
+      }
+      .chat-bubble {
+        max-width: 70%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+      }
+      .chat-left {
+        background-color: #f0f0f0;
+        align-self: flex-start;
+      }
+      .chat-right {
+        background-color: #e6f4ff;
+        align-self: flex-end;
+      }
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        padding: 16px 24px;
+        background-color: #1677ff;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+      .toast.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+      }
+      @keyframes loading {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      .user-item.active {
+        background-color: #e6f4ff;
+      }
+    </style>
+  </head>
+  <body class="bg-white text-gray-800 min-h-screen flex">
+    <!-- 左侧导航 -->
+    <aside class="w-[400px] bg-secondary h-screen sticky top-0 overflow-y-auto">
+      <div class="p-6">
+        <img src="qu4claxzuuyzmhza.png" alt="中数睿智" class="h-10 mb-8" />
+        <nav>
+          <ul class="space-y-2">
+            <li>
+              <a
+                href="#"
+                class="menu-item active flex items-center p-3 rounded-md"
+                data-page="page1"
+              >
+                <i
+                  class="fas fa-chart-bar mr-3 w-5 h-5 flex justify-center items-center"
+                ></i>
+                <span>智能投诉分类与路由</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="menu-item flex items-center p-3 rounded-md"
+                data-page="page2"
+              >
+                <i
+                  class="fas fa-angry mr-3 w-5 h-5 flex justify-center items-center"
+                ></i>
+                <span>情绪分析与风险评级</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="menu-item flex items-center p-3 rounded-md"
+                data-page="page3"
+              >
+                <i
+                  class="fas fa-balance-scale mr-3 w-5 h-5 flex justify-center items-center"
+                ></i>
+                <span>合规自动化检查</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="menu-item flex items-center p-3 rounded-md"
+                data-page="page4"
+              >
+                <i
+                  class="fas fa-comment-dots mr-3 w-5 h-5 flex justify-center items-center"
+                ></i>
+                <span>智能回复辅助与话术建议</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="menu-item flex items-center p-3 rounded-md"
+                data-page="page5"
+              >
+                <i
+                  class="fas fa-bell mr-3 w-5 h-5 flex justify-center items-center"
+                ></i>
+                <span>全流程监控与预警</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                class="menu-item flex items-center p-3 rounded-md"
+                data-page="page6"
+              >
+                <i
+                  class="fas fa-chart-line mr-3 w-5 h-5 flex justify-center items-center"
+                ></i>
+                <span>根因分析与趋势预测</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </aside>
+    <!-- 右侧主内容区 -->
+    <main class="flex-1 p-8 overflow-y-auto">
+      <!-- 页面 1: 智能投诉分类与路由 -->
+      <section id="page1" class="page-container active">
+        <header class="mb-8">
+          <h2 class="text-2xl font-bold">智能投诉分类与路由</h2>
+          <p class="text-gray-600 mt-2">
+            自动识别投诉内容关键词、情感倾向和紧急程度，并进行精准分类与分派。
+          </p>
+        </header>
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <textarea
+            id="complaintInput"
+            class="w-full h-40 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="请输入客户投诉内容..."
+          ></textarea>
+          <div class="flex justify-end space-x-4 mt-4">
+            <button
+              class="px-6 py-2 bg-gray-100 text-gray-700 rounded-button whitespace-nowrap hover:bg-gray-200 transition"
+            >
+              清空
+            </button>
+            <button
+              id="submitComplaint"
+              class="px-6 py-2 bg-primary text-white rounded-button whitespace-nowrap hover:bg-blue-600 transition"
+            >
+              提交分析
+            </button>
+          </div>
+        </div>
+        <div
+          id="analysisResult"
+          class="hidden bg-white rounded-xl shadow-sm p-6 mb-8"
+        >
+          <h3 class="text-xl font-semibold mb-4">分析结果</h3>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"
+          >
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <h4 class="text-sm text-gray-600 mb-1">分类标签</h4>
+              <p class="font-medium" id="categoryLabel">-</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg">
+              <h4 class="text-sm text-gray-600 mb-1">关键词提取</h4>
+              <p class="font-medium" id="keywordsList">-</p>
+            </div>
+            <div class="bg-yellow-50 p-4 rounded-lg">
+              <h4 class="text-sm text-gray-600 mb-1">情感倾向</h4>
+              <p class="font-medium" id="sentimentLabel">-</p>
+            </div>
+            <div class="bg-red-50 p-4 rounded-lg">
+              <h4 class="text-sm text-gray-600 mb-1">紧急程度</h4>
+              <p class="font-medium" id="urgencyScore">-</p>
+            </div>
+          </div>
+          <div>
+            <h4 class="text-sm text-gray-600 mb-2">推荐处理部门</h4>
+            <select
+              class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option>客服部</option>
+              <option>合规部</option>
+              <option>风控部</option>
+            </select>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold">历史记录</h3>
+            <div class="flex space-x-2">
+              <select
+                class="p-2 border border-gray-300 rounded-lg focus:outline-none"
+              >
+                <option>全部分类</option>
+                <option>服务态度</option>
+                <option>产品缺陷</option>
+              </select>
+              <select
+                class="p-2 border border-gray-300 rounded-lg focus:outline-none"
+              >
+                <option>最近一周</option>
+                <option>最近一月</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table w-full">
+              <thead>
+                <tr>
+                  <th>时间戳</th>
+                  <th>投诉摘要</th>
+                  <th>自动分类</th>
+                  <th>处理人</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>2023-10-01 14:30</td>
+                  <td>客服态度恶劣，多次推诿...</td>
+                  <td>服务态度</td>
+                  <td>张伟</td>
+                  <td><span class="status-badge status-low">已完成</span></td>
+                </tr>
+                <tr>
+                  <td>2023-10-02 09:15</td>
+                  <td>购买的产品存在严重质量问题...</td>
+                  <td>产品缺陷</td>
+                  <td>李娜</td>
+                  <td>
+                    <span class="status-badge status-medium">处理中</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2023-10-03 16:45</td>
+                  <td>费用争议，账单不透明...</td>
+                  <td>费用争议</td>
+                  <td>王强</td>
+                  <td><span class="status-badge status-high">待处理</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- 页面 2: 情绪分析与风险评级 -->
+      <section id="page2" class="page-container">
+        <header class="mb-8">
+          <h2 class="text-2xl font-bold">情绪分析与风险评级</h2>
+          <p class="text-gray-600 mt-2">
+            综合客户情绪、历史行为与投诉内容，动态评估风险等级。
+          </p>
+        </header>
+        <div class="flex gap-8 mb-8">
+          <!-- 用户列表 -->
+          <div class="w-1/3 bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-semibold mb-4">用户列表</h3>
+            <div class="space-y-3 max-h-[600px] overflow-y-auto">
+              <div
+                class="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer user-item active"
+                data-user="1"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3"
+                >
+                  <span class="text-blue-600 font-medium">陈</span>
+                </div>
+                <div>
+                  <div class="font-medium">陈晓明</div>
+                  <div class="text-sm text-gray-500">VIP 钻石会员</div>
+                </div>
+              </div>
+              <div
+                class="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer user-item"
+                data-user="2"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3"
+                >
+                  <span class="text-green-600 font-medium">王</span>
+                </div>
+                <div>
+                  <div class="font-medium">王小丽</div>
+                  <div class="text-sm text-gray-500">VIP 黄金会员</div>
+                </div>
+              </div>
+              <div
+                class="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer user-item"
+                data-user="3"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3"
+                >
+                  <span class="text-purple-600 font-medium">张</span>
+                </div>
+                <div>
+                  <div class="font-medium">张建国</div>
+                  <div class="text-sm text-gray-500">普通会员</div>
+                </div>
+              </div>
+              <div
+                class="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer user-item"
+                data-user="4"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3"
+                >
+                  <span class="text-yellow-600 font-medium">刘</span>
+                </div>
+                <div>
+                  <div class="font-medium">刘雅婷</div>
+                  <div class="text-sm text-gray-500">VIP 白金会员</div>
+                </div>
+              </div>
+              <div
+                class="flex items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer user-item"
+                data-user="5"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3"
+                >
+                  <span class="text-red-600 font-medium">赵</span>
+                </div>
+                <div>
+                  <div class="font-medium">赵志强</div>
+                  <div class="text-sm text-gray-500">普通会员</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 用户详情 -->
+          <div class="flex-1">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-xl font-semibold mb-4">情绪雷达图</h3>
+                <div id="emotionRadar" style="width: 100%; height: 420px"></div>
+              </div>
+              <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-xl font-semibold mb-4">风险评分</h3>
+                <div class="flex items-center mb-6">
+                  <div class="text-4xl font-bold mr-4">85</div>
+                  <div class="flex-1">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                      <div
+                        class="bg-red-600 h-2.5 rounded-full"
+                        style="width: 85%"
+                      ></div>
+                    </div>
+                    <div
+                      class="flex justify-between text-xs text-gray-500 mt-1"
+                    >
+                      <span>0</span>
+                      <span>25</span>
+                      <span>50</span>
+                      <span>75</span>
+                      <span>100</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <div class="flex justify-between mb-1">
+                      <span class="text-sm">历史频率</span>
+                      <span class="text-sm font-medium">30%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        class="bg-blue-600 h-2 rounded-full"
+                        style="width: 30%"
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between mb-1">
+                      <span class="text-sm">金额影响</span>
+                      <span class="text-sm font-medium">25%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        class="bg-green-600 h-2 rounded-full"
+                        style="width: 25%"
+                      ></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between mb-1">
+                      <span class="text-sm">行业敏感度</span>
+                      <span class="text-sm font-medium">45%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        class="bg-yellow-600 h-2 rounded-full"
+                        style="width: 45%"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-xl font-semibold mb-4">预警机制控制台</h3>
+                <div class="space-y-4">
+                  <div
+                    class="flex items-center p-4 border border-gray-200 rounded-lg"
+                  >
+                    <div class="mr-4">
+                      <span class="status-badge status-high">高风险</span>
+                    </div>
+                    <div class="flex-1">
+                      <div class="font-medium">事件编号: TC20231003001</div>
+                      <div class="text-sm text-gray-600">
+                        触发原因: 客户情绪激烈且涉及金额较大
+                      </div>
+                    </div>
+                    <div class="text-sm text-gray-500">张伟</div>
+                  </div>
+                  <div
+                    class="flex items-center p-4 border border-gray-200 rounded-lg"
+                  >
+                    <div class="mr-4">
+                      <span class="status-badge status-medium">中风险</span>
+                    </div>
+                    <div class="flex-1">
+                      <div class="font-medium">事件编号: TC20231002005</div>
+                      <div class="text-sm text-gray-600">
+                        触发原因: 客户为VIP且历史投诉频次高
+                      </div>
+                    </div>
+                    <div class="text-sm text-gray-500">李娜</div>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-xl font-semibold mb-4">客户画像</h3>
+                <div class="flex items-center mb-6">
+                  <div
+                    class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mr-4"
+                  >
+                    <i class="fas fa-user text-2xl text-gray-500"></i>
+                  </div>
+                  <div>
+                    <div class="text-xl font-bold">陈晓明</div>
+                    <div class="text-gray-600">VIP等级: 钻石会员</div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">过往投诉次数</div>
+                    <div class="text-2xl font-bold">12</div>
+                  </div>
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">最近满意度</div>
+                    <div class="text-2xl font-bold text-red-600">不满意</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- 页面 3: 合规自动化检查 -->
+      <section id="page3" class="page-container">
+        <header class="mb-8">
+          <h2 class="text-2xl font-bold">合规自动化检查</h2>
+          <p class="text-gray-600 mt-2">
+            自动检测投诉中是否存在违反监管规定的行为，并关联法规条款。
+          </p>
+        </header>
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <textarea
+            class="w-full h-40 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="请输入需要检查的内容..."
+          ></textarea>
+          <div class="flex justify-end mt-4">
+            <button
+              id="startScan"
+              class="px-6 py-2 bg-primary text-white rounded-button whitespace-nowrap hover:bg-blue-600 transition"
+            >
+              开始扫描
+            </button>
+          </div>
+        </div>
+        <!-- 扫描loading状态 -->
+        <div id="scanLoading" class="hidden bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div class="flex flex-col items-center justify-center py-12">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-gray-600">正在扫描中，请稍候...</p>
+          </div>
+        </div>
+        <!-- 扫描结果区域 -->
+        <div id="scanResults" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h3 class="text-xl font-semibold mb-4">违规明细列表</h3>
+          <div class="overflow-x-auto">
+            <table class="table w-full">
+              <thead>
+                <tr>
+                  <th>序号</th>
+                  <th>违规类型</th>
+                  <th>相关法规</th>
+                  <th>条款原文链接</th>
+                  <th>是否需要上报</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>信息披露违规</td>
+                  <td>《消费者权益保护法》第19条</td>
+                  <td>
+                    <a href="#" class="text-primary hover:underline"
+                      >查看条款</a
+                    >
+                  </td>
+                  <td>是</td>
+                  <td>
+                    <button class="text-primary hover:underline">
+                      查看详情
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>欺诈行为</td>
+                  <td>《广告法》第28条</td>
+                  <td>
+                    <a href="#" class="text-primary hover:underline"
+                      >查看条款</a
+                    >
+                  </td>
+                  <td>是</td>
+                  <td>
+                    <button class="text-primary hover:underline">
+                      查看详情
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h3 class="text-xl font-semibold mb-4">合规报告输出</h3>
+          <div class="flex items-center space-x-4">
+            <button
+              class="px-6 py-2 bg-primary text-white rounded-button whitespace-nowrap hover:bg-blue-600 transition"
+            >
+              生成 PDF 报告
+            </button>
+            <button
+              class="px-6 py-2 bg-gray-100 text-gray-700 rounded-button whitespace-nowrap hover:bg-gray-200 transition"
+            >
+              生成 Word 报告
+            </button>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-xl font-semibold mb-4">规则管理</h3>
+          <button
+            class="px-6 py-2 bg-gray-800 text-white rounded-button whitespace-nowrap hover:bg-gray-900 transition"
+          >
+            进入规则维护界面
+          </button>
+        </div>
+        </div>
+      </section>
+      <!-- 页面 4: 智能回复辅助与话术建议 -->
+      <section id="page4" class="page-container">
+        <header class="mb-8">
+          <h2 class="text-2xl font-bold">智能回复辅助与话术建议</h2>
+          <p class="text-gray-600 mt-2">
+            为客服人员提供标准话术参考，降低沟通冲突概率。
+          </p>
+        </header>
+        <div class="bg-white rounded-xl shadow-sm mb-8 flex flex-col h-[600px]">
+          <!-- 聊天窗口头部 -->
+          <div
+            class="flex items-center justify-between p-4 border-b border-gray-200"
+          >
+            <div class="flex items-center">
+              <div
+                class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center mr-3"
+              >
+                <span class="text-orange-600 font-medium">客</span>
+              </div>
+              <div>
+                <div class="font-medium">王小丽</div>
+                <div class="text-xs text-green-500 flex items-center">
+                  <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span
+                  >在线
+                </div>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button
+                class="px-3 py-1.5 bg-primary text-white text-sm rounded-button whitespace-nowrap"
+              >
+                初次回应
+              </button>
+              <button
+                class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-button whitespace-nowrap hover:bg-gray-200"
+              >
+                升级处理
+              </button>
+              <button
+                class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-button whitespace-nowrap hover:bg-gray-200"
+              >
+                安抚挽留
+              </button>
+            </div>
+          </div>
+          <!-- 聊天消息区域 -->
+          <div
+            id="chatMessages"
+            class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4"
+          >
+            <div class="text-center text-xs text-gray-400 my-2">
+              2023-10-03 14:30
+            </div>
+            <div class="flex items-start">
+              <div
+                class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mr-2 flex-shrink-0"
+              >
+                <span class="text-orange-600 text-sm">客</span>
+              </div>
+              <div class="max-w-[70%]">
+                <div class="bg-white p-3 rounded-lg rounded-tl-none shadow-sm">
+                  <p class="text-sm">你们的产品质量太差了，我要退货！</p>
+                </div>
+                <div class="text-xs text-gray-400 mt-1">14:30</div>
+              </div>
+            </div>
+            <div class="flex items-start justify-end">
+              <div class="max-w-[70%]">
+                <div
+                  class="bg-primary text-white p-3 rounded-lg rounded-tr-none"
+                >
+                  <p class="text-sm">
+                    非常抱歉给您带来不便，请问具体是什么问题呢？我们会尽快为您解决。
+                  </p>
+                </div>
+                <div class="text-xs text-gray-400 mt-1 text-right">14:31</div>
+              </div>
+              <div
+                class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center ml-2 flex-shrink-0"
+              >
+                <span class="text-blue-600 text-sm">客服</span>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div
+                class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mr-2 flex-shrink-0"
+              >
+                <span class="text-orange-600 text-sm">客</span>
+              </div>
+              <div class="max-w-[70%]">
+                <div class="bg-white p-3 rounded-lg rounded-tl-none shadow-sm">
+                  <p class="text-sm">
+                    买回来用了两天就坏了，屏幕出现花纹，这质量也太差了吧！
+                  </p>
+                </div>
+                <div class="text-xs text-gray-400 mt-1">14:32</div>
+              </div>
+            </div>
+          </div>
+          <!-- 输入区域 -->
+          <div class="p-4 border-t border-gray-200 bg-white rounded-b-xl">
+            <div
+              class="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent"
+            >
+              <textarea
+                id="chatInput"
+                class="w-full p-4 resize-none focus:outline-none"
+                rows="3"
+                placeholder="输入回复内容，shift+enter换行"
+              ></textarea>
+              <div
+                class="flex items-center justify-between px-3 py-2 bg-gray-50 border-t border-gray-100"
+              >
+                <div class="flex items-center space-x-1">
+                  <button
+                    class="flex items-center px-3 py-1.5 text-sm text-primary hover:bg-blue-50 rounded-lg transition"
+                  >
+                    <i class="fas fa-robot mr-1.5"></i>AI话术
+                  </button>
+                  <button
+                    class="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                  >
+                    <i class="fas fa-history mr-1.5"></i>历史记录
+                  </button>
+                  <button
+                    class="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                  >
+                    <i class="fas fa-cog mr-1.5"></i>快捷回复
+                  </button>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button
+                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                  >
+                    <i class="far fa-smile"></i>
+                  </button>
+                  <button
+                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                  >
+                    <i class="fas fa-paperclip"></i>
+                  </button>
+                  <button
+                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                  >
+                    <i class="fas fa-image"></i>
+                  </button>
+                  <button
+                    id="sendMessage"
+                    class="w-9 h-9 flex items-center justify-center bg-primary text-white rounded-full hover:bg-blue-600 transition"
+                  >
+                    <i class="fas fa-paper-plane text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-semibold mb-4">话术推荐</h3>
+            <div class="space-y-4">
+              <div
+                class="p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-blue-50 transition cursor-pointer"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <div class="font-medium">
+                    尊敬的客户，我们非常重视您的反馈，对于您遇到的问题深表歉意。
+                  </div>
+                  <span class="text-xs text-gray-500 whitespace-nowrap ml-2"
+                    >置信度: 92%</span
+                  >
+                </div>
+                <div class="text-sm text-gray-600 mb-3">来源: 历史案例</div>
+                <button
+                  class="insert-script text-primary text-sm hover:underline"
+                  data-script="尊敬的客户，我们非常重视您的反馈，对于您遇到的问题深表歉意。请您提供一下订单号，我们会立即为您核实处理。"
+                >
+                  插入到回复框
+                </button>
+              </div>
+              <div
+                class="p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-blue-50 transition cursor-pointer"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <div class="font-medium">
+                    为了更好地解决您的问题，我们需要进一步了解情况...
+                  </div>
+                  <span class="text-xs text-gray-500 whitespace-nowrap ml-2"
+                    >置信度: 87%</span
+                  >
+                </div>
+                <div class="text-sm text-gray-600 mb-3">来源: AI生成</div>
+                <button
+                  class="insert-script text-primary text-sm hover:underline"
+                  data-script="为了更好地解决您的问题，我们需要进一步了解情况。请问产品是什么时候购买的？方便拍照发给我看一下具体情况吗？"
+                >
+                  插入到回复框
+                </button>
+              </div>
+              <div
+                class="p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-blue-50 transition cursor-pointer"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <div class="font-medium">
+                    非常抱歉给您带来了不好的体验，我们会尽快为您处理...
+                  </div>
+                  <span class="text-xs text-gray-500 whitespace-nowrap ml-2"
+                    >置信度: 85%</span
+                  >
+                </div>
+                <div class="text-sm text-gray-600 mb-3">来源: AI生成</div>
+                <button
+                  class="insert-script text-primary text-sm hover:underline"
+                  data-script="非常抱歉给您带来了不好的体验。根据我们的售后政策，您可以选择退货退款或者换货。请问您希望如何处理呢？"
+                >
+                  插入到回复框
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-semibold mb-4">个性化提醒</h3>
+            <div class="p-4 bg-yellow-50 rounded-lg mb-6">
+              <div class="font-medium mb-2">注意事项</div>
+              <p class="text-sm">
+                此客户投诉类型为"产品质量"，情绪状态为"愤怒"，请谨慎措辞，避免二次冲突。
+              </p>
+            </div>
+            <h4 class="font-medium mb-3">客户关键属性</h4>
+            <ul class="space-y-2 text-sm">
+              <li class="flex justify-between">
+                <span>投诉类型:</span>
+                <span class="font-medium">产品质量</span>
+              </li>
+              <li class="flex justify-between">
+                <span>情绪状态:</span>
+                <span class="font-medium text-red-600">愤怒</span>
+              </li>
+              <li class="flex justify-between">
+                <span>VIP等级:</span>
+                <span class="font-medium">黄金会员</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-xl font-semibold mb-4">历史回复对照</h3>
+          <div class="overflow-x-auto">
+            <table class="table w-full">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>客户问题</th>
+                  <th>客服回复</th>
+                  <th>满意度</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>2023-09-28</td>
+                  <td>产品功能不符合描述</td>
+                  <td>非常抱歉，我们会立即核实并与您联系...</td>
+                  <td>满意</td>
+                  <td>
+                    <button class="text-primary hover:underline mr-2">
+                      查看
+                    </button>
+                    <button class="text-primary hover:underline">收藏</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>2023-09-25</td>
+                  <td>物流延迟一周未收到货</td>
+                  <td>对不起让您久等了，我们已催促物流公司...</td>
+                  <td>一般</td>
+                  <td>
+                    <button class="text-primary hover:underline mr-2">
+                      查看
+                    </button>
+                    <button class="text-primary hover:underline">收藏</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <!-- 页面 5: 全流程监控与预警 -->
+      <section id="page5" class="page-container">
+        <header class="mb-8">
+          <h2 class="text-2xl font-bold">全流程监控与预警</h2>
+          <p class="text-gray-600 mt-2">
+            实时掌握投诉处理时效与质量，异常情况及时告警。
+          </p>
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="text-gray-600 text-sm mb-1">总投诉数</div>
+            <div class="text-3xl font-bold">1,248</div>
+            <div class="text-green-600 text-sm mt-1">↑ 12% 同比增长</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="text-gray-600 text-sm mb-1">平均响应时长</div>
+            <div class="text-3xl font-bold">2.3 小时</div>
+            <div class="text-red-600 text-sm mt-1">↑ 0.5 小时</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="text-gray-600 text-sm mb-1">超时率</div>
+            <div class="text-3xl font-bold">8.7%</div>
+            <div class="text-red-600 text-sm mt-1">↑ 2.1%</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="text-gray-600 text-sm mb-1">高风险投诉占比</div>
+            <div class="text-3xl font-bold">15.3%</div>
+            <div class="text-green-600 text-sm mt-1">↓ 3.2%</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h3 class="text-xl font-semibold mb-4">工单流转视图</h3>
+          <div class="relative pl-8 border-l-2 border-gray-200 ml-4">
+            <div class="mb-8">
+              <div
+                class="absolute -left-11 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white"
+              >
+                <i class="fas fa-inbox"></i>
+              </div>
+              <div class="font-medium">2023-10-03 14:30</div>
+              <div class="text-gray-600">投诉已受理，分配给客服组</div>
+            </div>
+            <div class="mb-8">
+              <div
+                class="absolute -left-11 w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white"
+              >
+                <i class="fas fa-search"></i>
+              </div>
+              <div class="font-medium">2023-10-03 16:15</div>
+              <div class="text-gray-600">正在调查问题原因</div>
+            </div>
+            <div class="mb-8">
+              <div
+                class="absolute -left-11 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-white"
+              >
+                <i class="fas fa-exclamation-circle"></i>
+              </div>
+              <div class="font-medium text-red-600">
+                2023-10-04 10:00 (超时)
+              </div>
+              <div class="text-gray-600">调查超时，已触发预警</div>
+            </div>
+            <div>
+              <div
+                class="absolute -left-11 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white"
+              >
+                <i class="fas fa-check"></i>
+              </div>
+              <div class="font-medium">预计完成时间: 2023-10-05 14:00</div>
+              <div class="text-gray-600">等待客户确认解决方案</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-semibold mb-4">预警通知中心</h3>
+            <div class="space-y-4">
+              <div class="p-4 border-l-4 border-red-500 bg-red-50">
+                <div class="font-medium">ID123456 已超过 SLA 时限</div>
+                <div class="text-sm text-gray-600">负责人: 张伟</div>
+                <div class="text-sm text-gray-600">
+                  超时时间: 2 小时 15 分钟
+                </div>
+              </div>
+              <div class="p-4 border-l-4 border-yellow-500 bg-yellow-50">
+                <div class="font-medium">ID123457 客户情绪激烈</div>
+                <div class="text-sm text-gray-600">负责人: 李娜</div>
+                <div class="text-sm text-gray-600">风险等级: 高</div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-semibold mb-4">报表导出</h3>
+            <div class="space-y-4">
+              <button
+                class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-gray-50 flex justify-between items-center"
+              >
+                <span>日报统计报告</span>
+                <i class="fas fa-download text-gray-500"></i>
+              </button>
+              <button
+                class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-gray-50 flex justify-between items-center"
+              >
+                <span>周报分析报告</span>
+                <i class="fas fa-download text-gray-500"></i>
+              </button>
+              <button
+                class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-gray-50 flex justify-between items-center"
+              >
+                <span>月度趋势报告</span>
+                <i class="fas fa-download text-gray-500"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- 页面 6: 根因分析与趋势预测 -->
+      <section id="page6" class="page-container">
+        <header class="mb-8">
+          <h2 class="text-2xl font-bold">根因分析与趋势预测</h2>
+          <p class="text-gray-600 mt-2">
+            深入挖掘投诉根源，提前预判未来潜在问题。
+          </p>
+        </header>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-semibold mb-4">高频投诉热力图</h3>
+            <div
+              class="bg-gray-100 rounded-lg h-64 flex items-center justify-center"
+            >
+              <img
+                src="https://ai-public.mastergo.com/ai/img_res/7a42261a66b14650c6696a151bb4e981.jpg"
+                alt="投诉热力图"
+                class="w-full h-full object-cover rounded-lg"
+              />
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-xl font-semibold mb-4">聚类分析图表</h3>
+            <div
+              class="bg-gray-100 rounded-lg h-64 flex items-center justify-center"
+            >
+              <img
+                src="https://ai-public.mastergo.com/ai/img_res/02f0ff1902669d832a6ebdf90be0d5fe.jpg"
+                alt="聚类分析图"
+                class="w-full h-full object-cover rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h3 class="text-xl font-semibold mb-4">趋势预测曲线</h3>
+          <div id="trendChart" class="chart-container"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-xl font-semibold mb-4">自动报告生成</h3>
+          <div class="flex items-center space-x-4">
+            <button
+              class="px-6 py-2 bg-primary text-white rounded-button whitespace-nowrap hover:bg-blue-600 transition"
+            >
+              生成本周分析报告
+            </button>
+            <button
+              class="px-6 py-2 bg-gray-100 text-gray-700 rounded-button whitespace-nowrap hover:bg-gray-200 transition"
+            >
+              设置定时任务
+            </button>
+          </div>
+          <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div class="font-medium mb-2">报告预览</div>
+            <ul class="list-disc list-inside text-sm space-y-1">
+              <li>本周投诉总量较上周上升 12%，主要集中在产品质量方面</li>
+              <li>发现三个新的投诉热点：物流延迟、客服响应慢、退换货困难</li>
+              <li>建议加强品控部门与客服团队的协同培训</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- Toast 提示 -->
+    <div id="toast" class="toast">分析完成，结果已更新</div>
+    <script>
+      // 存储图表实例
+      let emotionChart = null;
+      let trendChart = null;
+
+      // 页面切换逻辑
+      document.querySelectorAll(".menu-item").forEach((item) => {
+        item.addEventListener("click", function (e) {
+          e.preventDefault();
+          // 更新菜单激活状态
+          document
+            .querySelectorAll(".menu-item")
+            .forEach((i) => i.classList.remove("active"));
+          this.classList.add("active");
+          // 切换页面内容
+          const targetPage = this.getAttribute("data-page");
+          document.querySelectorAll(".page-container").forEach((page) => {
+            page.classList.remove("active");
+          });
+          document.getElementById(targetPage).classList.add("active");
+          // 切换页面后重新调整图表尺寸
+          setTimeout(() => {
+            if (targetPage === "page2" && emotionChart) {
+              emotionChart.resize();
+            }
+            if (targetPage === "page6" && trendChart) {
+              trendChart.resize();
+            }
+          }, 100);
+        });
+      });
+      // 用户列表切换逻辑
+      document.querySelectorAll(".user-item").forEach((item) => {
+        item.addEventListener("click", function () {
+          // 更新用户列表激活状态
+          document
+            .querySelectorAll(".user-item")
+            .forEach((i) => i.classList.remove("active"));
+          this.classList.add("active");
+          // 这里可以添加切换用户详情的逻辑
+        });
+      });
+
+      // 聊天发送消息逻辑
+      const chatInput = document.getElementById("chatInput");
+      const sendBtn = document.getElementById("sendMessage");
+      const chatMessages = document.getElementById("chatMessages");
+
+      function sendMessage() {
+        const message = chatInput?.value.trim();
+        if (!message) return;
+
+        const now = new Date();
+        const timeStr =
+          now.getHours().toString().padStart(2, "0") +
+          ":" +
+          now.getMinutes().toString().padStart(2, "0");
+
+        const messageHtml = `
+<div class="flex items-start justify-end">
+<div class="max-w-[70%]">
+<div class="bg-primary text-white p-3 rounded-lg rounded-tr-none">
+<p class="text-sm">${message}</p>
+</div>
+<div class="text-xs text-gray-400 mt-1 text-right">${timeStr}</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center ml-2 flex-shrink-0">
+<span class="text-blue-600 text-sm">客服</span>
+</div>
+</div>
+`;
+
+        chatMessages.insertAdjacentHTML("beforeend", messageHtml);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatInput.value = "";
+      }
+
+      sendBtn?.addEventListener("click", sendMessage);
+      chatInput?.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // 话术插入功能
+      document.querySelectorAll(".insert-script").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const script = this.getAttribute("data-script");
+          if (chatInput) {
+            chatInput.value = script;
+            chatInput.focus();
+          }
+        });
+      });
+
+      // 合规扫描逻辑
+      document.getElementById("startScan")?.addEventListener("click", function () {
+        const scanLoading = document.getElementById("scanLoading");
+        const scanResults = document.getElementById("scanResults");
+
+        // 隐藏结果，显示loading
+        scanResults.classList.add("hidden");
+        scanLoading.classList.remove("hidden");
+
+        // 模拟扫描延迟
+        setTimeout(() => {
+          // 隐藏loading，显示结果
+          scanLoading.classList.add("hidden");
+          scanResults.classList.remove("hidden");
+        }, 2000);
+      });
+      // 模拟提交分析
+      document
+        .getElementById("submitComplaint")
+        ?.addEventListener("click", function () {
+          const input = document.getElementById("complaintInput").value;
+          if (!input.trim()) {
+            alert("请输入投诉内容");
+            return;
+          }
+          // 显示加载状态
+          const resultSection = document.getElementById("analysisResult");
+          resultSection.innerHTML = `
+<div class="space-y-4">
+<div class="skeleton h-6 rounded"></div>
+<div class="skeleton h-6 rounded"></div>
+<div class="skeleton h-6 rounded"></div>
+</div>
+`;
+          resultSection.classList.remove("hidden");
+          // 模拟API调用延迟
+          setTimeout(() => {
+            // 更新结果
+            resultSection.innerHTML = `
+<h3 class="text-xl font-semibold mb-4">分析结果</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+<div class="bg-blue-50 p-4 rounded-lg">
+<h4 class="text-sm text-gray-600 mb-1">分类标签</h4>
+<p class="font-medium" id="categoryLabel">服务态度</p>
+</div>
+<div class="bg-green-50 p-4 rounded-lg">
+<h4 class="text-sm text-gray-600 mb-1">关键词提取</h4>
+<p class="font-medium" id="keywordsList">态度恶劣, 推诿, 不耐烦</p>
+</div>
+<div class="bg-yellow-50 p-4 rounded-lg">
+<h4 class="text-sm text-gray-600 mb-1">情感倾向</h4>
+<p class="font-medium" id="sentimentLabel">负面</p>
+</div>
+<div class="bg-red-50 p-4 rounded-lg">
+<h4 class="text-sm text-gray-600 mb-1">紧急程度</h4>
+<p class="font-medium" id="urgencyScore">85分 (紧急)</p>
+</div>
+</div>
+<div>
+<h4 class="text-sm text-gray-600 mb-2">推荐处理部门</h4>
+<select class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+<option>客服部</option>
+<option>合规部</option>
+<option>风控部</option>
+</select>
+</div>
+`;
+            // 显示Toast
+            const toast = document.getElementById("toast");
+            toast.classList.add("show");
+            setTimeout(() => {
+              toast.classList.remove("show");
+            }, 3000);
+          }, 1500);
+        });
+      // 初始化图表
+      document.addEventListener("DOMContentLoaded", function () {
+        // 情绪雷达图
+        const emotionChartDom = document.getElementById("emotionRadar");
+        if (emotionChartDom) {
+          emotionChart = echarts.init(emotionChartDom);
+          emotionChart.setOption({
+            animation: false,
+            radar: {
+              radius: "90%",
+              center: ["50%", "50%"],
+              indicator: [
+                { name: "愤怒", max: 100 },
+                { name: "焦虑", max: 100 },
+                { name: "不满", max: 100 },
+                { name: "满意", max: 100 },
+              ],
+              splitNumber: 4,
+              axisName: {
+                color: "#666",
+                fontSize: 16,
+                padding: [5, 5],
+              },
+            },
+            series: [
+              {
+                type: "radar",
+                data: [
+                  {
+                    value: [85, 70, 90, 30],
+                    name: "情绪强度",
+                    lineStyle: {
+                      color: "#1677ff",
+                    },
+                    areaStyle: {
+                      color: "rgba(22, 119, 255, 0.3)",
+                    },
+                  },
+                ],
+              },
+            ],
+          });
+        }
+        // 趋势预测图
+        const trendChartDom = document.getElementById("trendChart");
+        if (trendChartDom) {
+          trendChart = echarts.init(trendChartDom);
+          trendChart.setOption({
+            animation: false,
+            tooltip: {
+              trigger: "axis",
+            },
+            legend: {
+              data: ["实际投诉量", "预测值(乐观)", "预测值(悲观)"],
+            },
+            xAxis: {
+              type: "category",
+              boundaryGap: false,
+              data: [
+                "10/01",
+                "10/02",
+                "10/03",
+                "10/04",
+                "10/05",
+                "10/06",
+                "10/07",
+              ],
+            },
+            yAxis: {
+              type: "value",
+            },
+            series: [
+              {
+                name: "实际投诉量",
+                type: "line",
+                data: [120, 132, 101, 134, 90, 230, 210],
+                smooth: true,
+              },
+              {
+                name: "预测值(乐观)",
+                type: "line",
+                data: [130, 142, 111, 144, 100, 240, 220],
+                smooth: true,
+                lineStyle: {
+                  type: "dashed",
+                },
+              },
+              {
+                name: "预测值(悲观)",
+                type: "line",
+                data: [110, 122, 91, 124, 80, 220, 200],
+                smooth: true,
+                lineStyle: {
+                  type: "dashed",
+                },
+              },
+            ],
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
