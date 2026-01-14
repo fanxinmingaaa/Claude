@@ -1,0 +1,6 @@
+[submodule "my-android-game"]
+	path = my-android-game
+	url = git@github.com:fanxinmingaaa/my-android-game.git
+[submodule "webGPU"]
+	path = webGPU
+	url = git@github.com:fanxinmingaaa/webGPU.git
